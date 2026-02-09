@@ -1,0 +1,52 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Slide",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "UUID of the slide"
+      },
+      "elements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SlideElement"
+        }
+      }
+    },
+    "required": ["id", "elements"],
+    "definitions": {
+      "SlideElement": {
+        "oneOf": [
+          { "$ref": "#/definitions/TextElement" },
+          { "$ref": "#/definitions/IconElement" }
+        ]
+      },
+      "TextElement": {
+        "type": "object",
+        "properties": {
+          "type": { "const": "text" },
+          "id": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" },
+          "content": { "type": "string" }
+        },
+        "required": ["type", "id", "x", "y", "content"]
+      },
+      "IconElement": {
+        "type": "object",
+        "properties": {
+          "type": { "const": "icon" },
+          "id": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "size": { "type": "number" },
+          "name": { "type": "string" }
+        },
+        "required": ["type", "id", "x", "y", "name"]
+      }
+    }
+  }
+  
