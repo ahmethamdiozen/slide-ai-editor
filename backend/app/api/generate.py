@@ -20,12 +20,16 @@ def generate_slides(payload: GenerateRequest):
         data = json.loads(raw)
         elements = []
         for elem in data["elements"]:
-            elements.append(
-                {
-                    **elem,
-                    "id": str(uuid.uuid4())
-                }
-            )
+            base = {
+                **elem,
+                "id": str(uuid.uuid4())
+            }
+
+            if elem["type"] == "icon":
+                base["size"] = 24 
+
+            elements.append(base)
+            
         slide = Slide(
             id=str(uuid.uuid4()),
             elements=elements

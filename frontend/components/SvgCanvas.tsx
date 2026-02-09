@@ -8,5 +8,19 @@ export default function SvgCanvas() {
     return <div>No slides yet</div>;
   }
 
-  return <SlideRenderer slide={slides[activeSlideIndex]} />;
+  return (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100%",
+    }}
+  >
+    <div style={{ background: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
+      <SlideRenderer slide={slides[activeSlideIndex]} />
+    </div>
+  </div>
+);
+
 }
