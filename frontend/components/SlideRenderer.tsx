@@ -1,7 +1,7 @@
 import { Slide } from "@/types/slide";
 import { useEditorStore } from "@/store/editorStore";
-import { ICONS, DEFAULT_ICON } from "./icons"; 
-import { useRef } from "react"
+import { ICONS, DEFAULT_ICON } from "./icons";
+import { useRef } from "react";
 
 type Props = {
   slide: Slide;
@@ -18,9 +18,13 @@ function getSvgPoint(
   return pt.matrixTransform(svg.getScreenCTM()!.inverse());
 }
 
-
 export default function SlideRenderer({ slide }: Props) {
-  const { selectedElementId, selectElement } = useEditorStore();
+  const {
+    selectedElementId,
+    selectElement,
+    updateElementPosition,
+  } = useEditorStore();
+
   const dragRef = useRef<{
     id: string;
     startMouseX: number;
@@ -29,33 +33,31 @@ export default function SlideRenderer({ slide }: Props) {
     startY: number;
   } | null>(null);
 
-
-  const { updateElementPosition } = useEditorStore();
-
-
   return (
     <svg
       width={800}
       height={450}
-      style={{ border: "1px solid #ccc" }}
-        onMouseDown={() => {
-          selectElement(null);
-        }}
-        onMouseMove={(e) => {
-          if (!dragRef.current) return;
+      viewBox="0 0 800 450"
+      style={{ border: "1px solid #ccc", background: "white" }}
+      onMouseDown={() => {
+        // boş alana tıklandı → selection temizle
+        selectElement(null);
+      }}
+      onMouseMove={(e) => {
+        if (!dragRef.current) return;
 
-          const svg = e.currentTarget;
-          const point = getSvgPoint(svg, e.clientX, e.clientY);
+        const svg = e.currentTarget;
+        const point = getSvgPoint(svg, e.clientX, e.clientY);
 
-          const dx = point.x - dragRef.current.startMouseX;
-          const dy = point.y - dragRef.current.startMouseY;
+        const dx = point.x - dragRef.current.startMouseX;
+        const dy = point.y - dragRef.current.startMouseY;
 
-          updateElementPosition(
-            dragRef.current.id,
-            dragRef.current.startX + dx,
-            dragRef.current.startY + dy
-          );
-        }}
+        updateElementPosition(
+          dragRef.current.id,
+          dragRef.current.startX + dx,
+          dragRef.current.startY + dy
+        );
+      }}
       onMouseUp={() => {
         dragRef.current = null;
       }}
@@ -63,14 +65,18 @@ export default function SlideRenderer({ slide }: Props) {
         dragRef.current = null;
       }}
     >
-
       {slide.elements.map((el) => {
         const isSelected = el.id === selectedElementId;
 
+        // ======================
         // TEXT ELEMENT
+        // ======================
         if (el.type === "text") {
           return (
             <g
+              key={el.id}
+              transform={`translate(${el.x}, ${el.y})`}
+              style={{ cursor: "pointer" }}
               onMouseDown={(e) => {
                 e.stopPropagation();
 
@@ -87,11 +93,6 @@ export default function SlideRenderer({ slide }: Props) {
 
                 selectElement(el.id);
               }}
-
-              key={el.id}
-              transform={`translate(${el.x}, ${el.y})`}
-              onClick={() => selectElement(el.id)}
-              style={{ cursor: "pointer" }}
             >
               {isSelected && (
                 <rect
@@ -112,8 +113,9 @@ export default function SlideRenderer({ slide }: Props) {
           );
         }
 
-
+        // ======================
         // ICON ELEMENT
+        // ======================
         if (el.type === "icon") {
           const iconDef = ICONS[el.name] ?? ICONS[DEFAULT_ICON];
           const size = el.size ?? 24;
@@ -121,6 +123,9 @@ export default function SlideRenderer({ slide }: Props) {
 
           return (
             <g
+              key={el.id}
+              transform={`translate(${el.x}, ${el.y})`}
+              style={{ cursor: "pointer" }}
               onMouseDown={(e) => {
                 e.stopPropagation();
 
@@ -137,13 +142,7 @@ export default function SlideRenderer({ slide }: Props) {
 
                 selectElement(el.id);
               }}
-
-              key={el.id}
-              transform={`translate(${el.x}, ${el.y})`}
-              onClick={() => selectElement(el.id)}
-              style={{ cursor: "pointer" }}
             >
-              {/* Selection box — absolute, unscaled */}
               {isSelected && (
                 <rect
                   x={-half}
@@ -156,7 +155,6 @@ export default function SlideRenderer({ slide }: Props) {
                 />
               )}
 
-              {/* SVG icon — normalized */}
               <svg
                 x={-half}
                 y={-half}
@@ -170,9 +168,6 @@ export default function SlideRenderer({ slide }: Props) {
             </g>
           );
         }
-
-
-
 
         return null;
       })}
