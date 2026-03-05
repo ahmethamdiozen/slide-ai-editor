@@ -8,11 +8,14 @@ type EditorState = {
 
   // UI state
   selectedElementId: string | null;
+  editingElementId: string | null;
 
   // Actions
   setSlides: (slides: Slide[]) => void;
   selectElement: (id: string | null) => void;
+  setEditingElement: (id: string | null) => void;
   updateElementPosition: (id: string, x: number, y: number) => void;
+  updateElementContent: (id: string, content: string) => void;
 };
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -22,6 +25,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   slides: [],
   activeSlideIndex: 0,
   selectedElementId: null,
+  editingElementId: null,
 
   // ======================
   // Actions
@@ -32,10 +36,18 @@ export const useEditorStore = create<EditorState>((set) => ({
       slides,
       activeSlideIndex: 0,
       selectedElementId: null,
+      editingElementId: null,
     }),
 
   selectElement: (id) =>
     set({
+      selectedElementId: id,
+      editingElementId: null, // Herhangi bir seçimde edit modunu sıfırla
+    }),
+
+  setEditingElement: (id) =>
+    set({
+      editingElementId: id,
       selectedElementId: id,
     }),
 
@@ -48,6 +60,22 @@ export const useEditorStore = create<EditorState>((set) => ({
           ...slide,
           elements: slide.elements.map((el) =>
             el.id === id ? { ...el, x, y } : el
+          ),
+        };
+      });
+
+      return { slides };
+    }),
+
+  updateElementContent: (id, content) =>
+    set((state) => {
+      const slides = state.slides.map((slide, slideIndex) => {
+        if (slideIndex !== state.activeSlideIndex) return slide;
+
+        return {
+          ...slide,
+          elements: slide.elements.map((el) =>
+            el.type === "text" && el.id === id ? { ...el, content } : el
           ),
         };
       });

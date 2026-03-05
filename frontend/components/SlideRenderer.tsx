@@ -21,8 +21,11 @@ function getSvgPoint(
 export default function SlideRenderer({ slide }: Props) {
   const {
     selectedElementId,
+    editingElementId,
     selectElement,
+    setEditingElement,
     updateElementPosition,
+    updateElementContent,
   } = useEditorStore();
 
   const dragRef = useRef<{
@@ -44,7 +47,7 @@ export default function SlideRenderer({ slide }: Props) {
         selectElement(null);
       }}
       onMouseMove={(e) => {
-        if (!dragRef.current) return;
+        if (!dragRef.current || editingElementId) return;
 
         const svg = e.currentTarget;
         const point = getSvgPoint(svg, e.clientX, e.clientY);
@@ -67,6 +70,7 @@ export default function SlideRenderer({ slide }: Props) {
     >
       {slide.elements.map((el) => {
         const isSelected = el.id === selectedElementId;
+        const isEditing = el.id === editingElementId;
 
         // ======================
         // TEXT ELEMENT
@@ -76,8 +80,9 @@ export default function SlideRenderer({ slide }: Props) {
             <g
               key={el.id}
               transform={`translate(${el.x}, ${el.y})`}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: isEditing ? "text" : "pointer" }}
               onMouseDown={(e) => {
+                if (isEditing) return; // Edit yaparken sürüklemeyi kapat
                 e.stopPropagation();
 
                 const svg = e.currentTarget.ownerSVGElement!;
@@ -93,8 +98,12 @@ export default function SlideRenderer({ slide }: Props) {
 
                 selectElement(el.id);
               }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setEditingElement(el.id);
+              }}
             >
-              {isSelected && (
+              {isSelected && !isEditing && (
                 <rect
                   x={-8}
                   y={-24}
@@ -106,9 +115,38 @@ export default function SlideRenderer({ slide }: Props) {
                 />
               )}
 
-              <text x={0} y={0} fontSize={24} fill="black">
-                {el.content}
-              </text>
+              {isEditing ? (
+                <foreignObject x={-8} y={-24} width={400} height={100}>
+                  <textarea
+                    autoFocus
+                    defaultValue={el.content}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      fontSize: "24px",
+                      border: "1px solid blue",
+                      outline: "none",
+                      background: "white",
+                      resize: "none",
+                      fontFamily: "inherit",
+                    }}
+                    onBlur={(e) => {
+                      updateElementContent(el.id, e.target.value);
+                      setEditingElement(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                  />
+                </foreignObject>
+              ) : (
+                <text x={0} y={0} fontSize={24} fill="black">
+                  {el.content}
+                </text>
+              )}
             </g>
           );
         }
