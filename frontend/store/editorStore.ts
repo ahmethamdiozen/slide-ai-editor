@@ -14,7 +14,9 @@ type EditorState = {
   setSlides: (slides: Slide[]) => void;
   selectElement: (id: string | null) => void;
   setEditingElement: (id: string | null) => void;
+  deleteElement: (id: string) => void;
   updateElementPosition: (id: string, x: number, y: number) => void;
+  updateElementSize: (id: string, width: number, height: number) => void;
   updateElementContent: (id: string, content: string) => void;
 };
 
@@ -51,6 +53,20 @@ export const useEditorStore = create<EditorState>((set) => ({
       selectedElementId: id,
     }),
 
+  deleteElement: (id) =>
+    set((state) => {
+      const slides = state.slides.map((slide, slideIndex) => {
+        if (slideIndex !== state.activeSlideIndex) return slide;
+
+        return {
+          ...slide,
+          elements: slide.elements.filter((el) => el.id !== id),
+        };
+      });
+
+      return { slides, selectedElementId: null };
+    }),
+
   updateElementPosition: (id, x, y) =>
     set((state) => {
       const slides = state.slides.map((slide, slideIndex) => {
@@ -61,6 +77,28 @@ export const useEditorStore = create<EditorState>((set) => ({
           elements: slide.elements.map((el) =>
             el.id === id ? { ...el, x, y } : el
           ),
+        };
+      });
+
+      return { slides };
+    }),
+
+  updateElementSize: (id, width, height) =>
+    set((state) => {
+      const slides = state.slides.map((slide, slideIndex) => {
+        if (slideIndex !== state.activeSlideIndex) return slide;
+
+        return {
+          ...slide,
+          elements: slide.elements.map((el) => {
+            if (el.id !== id) return el;
+
+            if (el.type === "icon") {
+              return { ...el, size: Math.max(width, height) };
+            }
+
+            return { ...el, width, height };
+          }),
         };
       });
 
